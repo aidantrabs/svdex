@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use svdex::cli::{Cli, Command};
 use svdex::image_io::{image_to_channels, load_image};
 use svdex::matrix::channel_stats;
+use svdex::svd::compute_svd;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -37,6 +38,14 @@ fn cmd_info(path: &PathBuf) -> Result<()> {
             "  {}: min={min:.0}, max={max:.0}, mean={mean:.1}",
             names[i]
         );
+    }
+
+    println!("\ncomputing svd for singular value preview...");
+    for (i, ch) in channels.iter().enumerate() {
+        let svd = compute_svd(ch)?;
+        let n = svd.s.len().min(10);
+        let top: Vec<String> = svd.s.iter().take(n).map(|v| format!("{v:.1}")).collect();
+        println!("  {} top-{n} singular values: [{}]", names[i], top.join(", "));
     }
 
     Ok(())
