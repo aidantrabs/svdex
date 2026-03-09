@@ -2,6 +2,10 @@
 
 svd image compression lab - an interactive cli tool for compressing images using truncated singular value decomposition.
 
+## demo
+
+![demo](assets/demo.gif)
+
 ## usage
 
 ### compress a single image
