@@ -6,6 +6,7 @@ use svdex::cli::{Cli, Command};
 use svdex::compression::compress_image;
 use svdex::image_io::{channels_to_image, image_to_channels, load_image, save_image};
 use svdex::matrix::channel_stats;
+use svdex::metrics::compute_report;
 use svdex::svd::compute_svd;
 
 fn main() -> Result<()> {
@@ -56,6 +57,9 @@ fn cmd_compress(path: &PathBuf, k: usize, output: Option<PathBuf>) -> Result<()>
 
     let channels = image_to_channels(&img);
     let compressed = compress_image(&channels, k)?;
+
+    let report = compute_report(&channels, &compressed, k);
+    println!("\n{report}");
 
     let out_path = output.unwrap_or_else(|| {
         PathBuf::from(format!("output/compressed/compressed_k{k}.png"))
