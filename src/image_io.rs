@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use image::{Rgb, RgbImage};
+use image::{ImageBuffer, Rgb, RgbImage};
 use ndarray::Array2;
 use std::path::Path;
 
@@ -27,4 +27,26 @@ pub fn image_to_channels(img: &RgbImage) -> [Array2<f64>; 3] {
     }
 
     [r, g, b]
+}
+
+pub fn channels_to_image(channels: &[Array2<f64>; 3]) -> RgbImage {
+    let rows = channels[0].nrows();
+    let cols = channels[0].ncols();
+
+    ImageBuffer::from_fn(cols as u32, rows as u32, |x, y| {
+        let r = channels[0][[y as usize, x as usize]].clamp(0.0, 255.0) as u8;
+        let g = channels[1][[y as usize, x as usize]].clamp(0.0, 255.0) as u8;
+        let b = channels[2][[y as usize, x as usize]].clamp(0.0, 255.0) as u8;
+        Rgb([r, g, b])
+    })
+}
+
+pub fn save_image(img: &RgbImage, path: &Path) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
+    }
+    img.save(path)
+        .with_context(|| format!("Failed to save image: {}", path.display()))?;
+    Ok(())
 }
