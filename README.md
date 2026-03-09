@@ -1,6 +1,6 @@
 # svdex
 
-svd image compression lab - an interactive cli tool for compressing images using truncated singular value decomposition.
+an interactive cli tool for compressing images using truncated singular value decomposition.
 
 ## demo
 
