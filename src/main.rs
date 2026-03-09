@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use svdex::cli::{Cli, Command};
 use svdex::compression::compress_image;
+use svdex::experiment::run_experiment;
 use svdex::image_io::{channels_to_image, image_to_channels, load_image, save_image};
 use svdex::matrix::channel_stats;
 use svdex::metrics::compute_report;
@@ -15,10 +16,7 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Info { image } => cmd_info(&image),
         Command::Compress { image, k, output } => cmd_compress(&image, k, output),
-        Command::Experiment { image, ranks } => {
-            println!("experiment: {} ranks={:?}", image.display(), ranks);
-            Ok(())
-        }
+        Command::Experiment { image, ranks } => cmd_experiment(&image, &ranks),
     }
 }
 
@@ -67,6 +65,22 @@ fn cmd_compress(path: &PathBuf, k: usize, output: Option<PathBuf>) -> Result<()>
     let result_img = channels_to_image(&compressed);
     save_image(&result_img, &out_path)?;
     println!("saved to {}", out_path.display());
+
+    Ok(())
+}
+
+fn cmd_experiment(path: &PathBuf, ranks: &[usize]) -> Result<()> {
+    let img = load_image(path)?;
+    let (w, h) = img.dimensions();
+    println!(
+        "running experiment on {} ({w}x{h}) with ranks {:?}",
+        path.display(),
+        ranks
+    );
+
+    let channels = image_to_channels(&img);
+    let out_dir = PathBuf::from("output/compressed");
+    run_experiment(&channels, ranks, &out_dir)?;
 
     Ok(())
 }
