@@ -3,7 +3,8 @@ use clap::Parser;
 use std::path::PathBuf;
 
 use svdex::cli::{Cli, Command};
-use svdex::image_io::{image_to_channels, load_image};
+use svdex::compression::compress_image;
+use svdex::image_io::{channels_to_image, image_to_channels, load_image, save_image};
 use svdex::matrix::channel_stats;
 use svdex::svd::compute_svd;
 
@@ -12,10 +13,7 @@ fn main() -> Result<()> {
 
     match cli.command {
         Command::Info { image } => cmd_info(&image),
-        Command::Compress { image, k, output } => {
-            println!("compress: {} k={} output={:?}", image.display(), k, output);
-            Ok(())
-        }
+        Command::Compress { image, k, output } => cmd_compress(&image, k, output),
         Command::Experiment { image, ranks } => {
             println!("experiment: {} ranks={:?}", image.display(), ranks);
             Ok(())
@@ -47,6 +45,24 @@ fn cmd_info(path: &PathBuf) -> Result<()> {
         let top: Vec<String> = svd.s.iter().take(n).map(|v| format!("{v:.1}")).collect();
         println!("  {} top-{n} singular values: [{}]", names[i], top.join(", "));
     }
+
+    Ok(())
+}
+
+fn cmd_compress(path: &PathBuf, k: usize, output: Option<PathBuf>) -> Result<()> {
+    let img = load_image(path)?;
+    let (w, h) = img.dimensions();
+    println!("compressing {} ({w}x{h}) at rank {k}...", path.display());
+
+    let channels = image_to_channels(&img);
+    let compressed = compress_image(&channels, k)?;
+
+    let out_path = output.unwrap_or_else(|| {
+        PathBuf::from(format!("output/compressed/compressed_k{k}.png"))
+    });
+    let result_img = channels_to_image(&compressed);
+    save_image(&result_img, &out_path)?;
+    println!("saved to {}", out_path.display());
 
     Ok(())
 }
